@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADMOS — Конкурентный анализ тендеров</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{--bg:#fff;--text:#1a1a2e;--muted:#666;--light:#888;--accent:#1a1a2e;--accent-light:#f5f7ff;--border:#e0e0e0;--border-accent:#d0d7f5;--hover:#eef0fc;--danger:#c0392b;--success:#2e7d32;--row-alt:#f9fafb}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+  .container{max-width:960px;margin:0 auto;padding:16px}
+  .header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+  .header h1{font-size:20px;font-weight:700}
+  .header .sub{font-size:12px;color:var(--light)}
+  .btn{font-size:12px;background:#eee;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-family:inherit}
+  .btn:hover{background:#ddd}
+  .tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px}
+  .tab{padding:6px 14px;font-size:12px;border-radius:6px;border:none;cursor:pointer;background:#eee;color:#333;font-weight:400;font-family:inherit}
+  .tab.active{background:var(--accent);color:#fff;font-weight:600}
+  .kpi-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+  .kpi{background:var(--accent-light);border:1px solid var(--border-accent);border-radius:8px;padding:12px 16px;min-width:140px;flex:1 1 140px}
+  .kpi-label{font-size:11px;color:var(--muted);margin-bottom:4px}
+  .kpi-value{font-size:20px;font-weight:700;color:var(--accent)}
+  .kpi-sub{font-size:11px;color:var(--light);margin-top:2px}
+  .section{margin-bottom:24px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .section-head{background:var(--accent);color:#fff;padding:10px 16px;cursor:pointer;font-weight:600;font-size:14px;display:flex;justify-content:space-between;user-select:none}
+  .section-body{padding:16px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  thead tr{background:var(--hover)}
+  th{padding:6px 10px;text-align:right;white-space:nowrap;border-bottom:2px solid var(--border-accent)}
+  th:first-child{text-align:left}
+  td{padding:5px 10px;border-bottom:1px solid #eee;text-align:right}
+  td:first-child{text-align:left}
+  tr:nth-child(even){background:var(--row-alt)}
+  .drop-zone{border:2px dashed #7c83e0;border-radius:12px;padding:48px;text-align:center;background:var(--accent-light);cursor:pointer}
+  .drop-zone:hover{border-color:var(--accent)}
+  .drop-icon{font-size:36px;margin-bottom:12px}
+  .drop-title{font-weight:600;color:var(--accent);margin-bottom:8px}
+  .drop-hint{font-size:12px;color:var(--light)}
+  .col-found{color:var(--success)}
+  .col-missing{color:var(--danger)}
+  .empty-msg{color:var(--light);padding:16px;background:#f5f5f5;border-radius:8px}
+  .show-more{margin-top:6px;font-size:11px;color:#555;background:none;border:1px solid #ccc;border-radius:4px;padding:3px 10px;cursor:pointer;font-family:inherit}
+  .export-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  .btn-export{font-size:12px;background:#2e7d32;color:#fff;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-family:inherit}
+  .btn-export:hover{opacity:.9}
+  @media print{.tabs,.btn,.export-bar,.show-more,.drop-zone{display:none!important}.section-head{cursor:default}}
+</style>
+</head>
+<body>
+<div class="container" id="app"></div>
+<script>
+const RANGES=[
+  {label:"до 500 тыс.",min:0,max:5e5},
+  {label:"500 тыс. – 1 млн",min:5e5,max:1e6},
+  {label:"1–3 млн",min:1e6,max:3e6},
+  {label:"3–5 млн",min:3e6,max:5e6},
+  {label:"5–10 млн",min:5e6,max:1e7},
+  {label:"10+ млн",min:1e7,max:Infinity}
+];
+const CATEGORIES=[
+  {label:"Корпоративный мерч",keys:["мерч","мерчандайз","брендир","сувен","подарок","набор"]},
+  {label:"Полиграфия",keys:["полиграф","печать","листовк","буклет","каталог","календар"]},
+  {label:"Одежда / текстиль",keys:["одежд","футболк","форм","текстил","худи","толстовк","рубашк"]},
+  {label:"Упаковка",keys:["упаков","коробк","пакет"]},
+  {label:"Мероприятия",keys:["меропри","event","праздник","корпоратив"]},
+  {label:"Услуги агентства",keys:["услуг","агентств","разработк","дизайн","креатив"]}
+];
+function fmt(n){if(n==null||isNaN(n))return"—";if(n>=1e9)return(n/1e9).toFixed(1)+" млрд \u20BD";if(n>=1e6)return(n/1e6).toFixed(1)+" млн \u20BD";if(n>=1e3)return(n/1e3).toFixed(0)+" тыс. \u20BD";return n.toFixed(0)+" \u20BD"}
+function pct(n){return isNaN(n)?"—":(n*100).toFixed(1)+"%"}
+function num(n){return isNaN(n)||n===undefined?"—":n.toLocaleString("ru")}
+function wr(rows){const w=rows.filter(r=>r._s==="won").length,d=rows.filter(r=>r._s==="won"||r._s==="lost").length;return d>0?w/d:NaN}
+function h(t,a,...c){const e=document.createElement(t);if(a)Object.entries(a).forEach(([k,v])=>{if(k==="style"&&typeof v==="object")Object.assign(e.style,v);else if(k.startsWith("on"))e.addEventListener(k.slice(2).toLowerCase(),v);else if(k==="className")e.className=v;else e.setAttribute(k,v)});c.flat(9).forEach(x=>{if(x!=null)e.appendChild(typeof x==="string"?document.createTextNode(x):x)});return e}
+
+let R=null,tab=0;
+const tabs=["Сводка","Динамика","Заказчики","Категории","Диапазоны","Регионы"];
+
+function render(){
+  const app=document.getElementById("app");app.innerHTML="";
+  if(!R){renderUpload(app);return}
+  renderReport(app);
+}
+
+function renderUpload(app){
+  const fi=h("input",{type:"file",accept:".xlsx,.xls",style:{display:"none"}});
+  fi.addEventListener("change",e=>{if(e.target.files[0])processFile(e.target.files[0])});
+  const zone=h("div",{className:"drop-zone",onClick:()=>fi.click()},
+    h("div",{className:"drop-icon"},"\uD83D\uDCCA"),
+    h("div",{className:"drop-title"},"Перетащите файл или нажмите для выбора"),
+    h("div",{className:"drop-hint"},"Поддерживается: .xlsx, .xls")
+  );
+  zone.addEventListener("dragover",e=>e.preventDefault());
+  zone.addEventListener("drop",e=>{e.preventDefault();if(e.dataTransfer.files[0])processFile(e.dataTransfer.files[0])});
+  app.append(
+    h("h2",{style:{color:"var(--accent)",marginBottom:"8px"}},"Конкурентный анализ тендеров"),
+    h("p",{style:{color:"#555",marginBottom:"24px",fontSize:"14px"}},"Загрузите Excel-файл с данными тендеров конкурента для автоматического анализа. Инструмент ADMOS."),
+    zone,fi
+  );
+}
+
+function sec(title,fn){
+  let open=true;
+  const body=h("div",{className:"section-body"});fn(body);
+  const ar=document.createTextNode("\u25B2");
+  const hd=h("div",{className:"section-head",onClick:()=>{open=!open;body.style.display=open?"":"none";ar.textContent=open?"\u25B2":"\u25BC"}},title,h("span",{},ar));
+  return h("div",{className:"section"},hd,body);
+}
+
+function tbl(cols,rows,mx=20){
+  const thead=h("thead",{},h("tr",{},...cols.map(c=>h("th",{},c))));
+  const tbody=h("tbody",{});
+  const show=rows.slice(0,mx);
+  show.forEach(r=>tbody.appendChild(h("tr",{},...r.map(c=>h("td",{},String(c))))));
+  const wrap=h("div",{style:{overflowX:"auto"}},h("table",{},thead,tbody));
+  if(rows.length>mx){
+    let exp=false;
+    const btn=h("button",{className:"show-more",onClick:()=>{
+      exp=!exp;tbody.innerHTML="";
+      (exp?rows:show).forEach(r=>tbody.appendChild(h("tr",{},...r.map(c=>h("td",{},String(c))))));
+      btn.textContent=exp?"Свернуть":`Показать все (${rows.length})`;
+    }},`Показать все (${rows.length})`);
+    return h("div",{},wrap,btn);
+  }
+  return wrap;
+}
+
+function kpi(l,v,s){
+  const els=[h("div",{className:"kpi-label"},l),h("div",{className:"kpi-value"},v)];
+  if(s)els.push(h("div",{className:"kpi-sub"},s));
+  return h("div",{className:"kpi"},...els);
+}
+
+function exportCSV(){
+  if(!R)return;
+  const sep=";";
+  let csv="\uFEFF";// BOM for Excel
+  // Summary
+  csv+="Показатель"+sep+"Значение\n";
+  csv+="Всего тендеров"+sep+R.rows.length+"\n";
+  csv+="Выиграно"+sep+R.wonRows.length+"\n";
+  csv+="Проиграно"+sep+R.lostRows.length+"\n";
+  csv+="Win-rate"+sep+pct(wr(R.rows))+"\n";
+  csv+="Общий объём"+sep+R.totalSum+"\n";
+  csv+="Объём побед"+sep+R.wonSum+"\n\n";
+  // Customers
+  csv+="Заказчик"+sep+"Тендеров"+sep+"Выиграно"+sep+"Win-rate"+sep+"Объём\n";
+  Object.entries(R.custStats).sort((a,b)=>b[1].total-a[1].total).forEach(([k,v])=>{
+    csv+=`"${k}"`+sep+v.total+sep+v.won+sep+pct(v.total>0?v.won/v.total:NaN)+sep+v.sum+"\n";
+  });
+  csv+="\n";
+  // Categories
+  csv+="Категория"+sep+"Тендеров"+sep+"Выиграно"+sep+"Win-rate"+sep+"Объём\n";
+  Object.entries(R.catStats).sort((a,b)=>b[1].total-a[1].total).forEach(([k,v])=>{
+    csv+=k+sep+v.total+sep+v.won+sep+pct(v.total>0?v.won/v.total:NaN)+sep+v.sum+"\n";
+  });
+  csv+="\n";
+  // Ranges
+  csv+="Диапазон"+sep+"Тендеров"+sep+"Выиграно"+sep+"Win-rate"+sep+"Объём\n";
+  R.rangeStats.forEach(rs=>{
+    csv+=rs.label+sep+rs.total+sep+rs.won+sep+pct(rs.won/((rs.won+rs.lost)||1))+sep+rs.sum+"\n";
+  });
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download="tender_analysis_export.csv";a.click();
+  URL.revokeObjectURL(url);
+}
+
+function renderReport(app){
+  const r=R,w=wr(r.rows);
+  app.appendChild(h("div",{className:"header"},
+    h("div",{},
+      h("h1",{},"Анализ тендеров конкурента"),
+      h("div",{className:"sub"},`Лист: ${r.sheetName} \xB7 Строк: ${r.rows.length} \xB7 Период: ${r.periodStart?r.periodStart.getFullYear()+"–"+r.periodEnd.getFullYear():"н/д"} \xB7 Для ADMOS`)
+    ),
+    h("button",{className:"btn",onClick:()=>{R=null;tab=0;render()}},"\u2190 Загрузить другой файл")
+  ));
+  app.appendChild(h("div",{className:"export-bar"},
+    h("button",{className:"btn-export",onClick:exportCSV},"\u2B07 Экспорт CSV"),
+    h("button",{className:"btn",onClick:()=>window.print()},"\uD83D\uDDA8 Печать / PDF")
+  ));
+  app.appendChild(h("div",{className:"tabs"},...tabs.map((t,i)=>h("button",{className:"tab"+(tab===i?" active":""),onClick:()=>{tab=i;render()}},t))));
+
+  if(tab===0){
+    const avg=r.sums.length?r.sums.reduce((a,b)=>a+b,0)/r.sums.length:NaN;
+    app.appendChild(h("div",{className:"kpi-row"},
+      kpi("Всего тендеров",num(r.rows.length)),
+      kpi("Выиграно",num(r.wonRows.length),pct(w)+" win-rate"),
+      kpi("Проиграно",num(r.lostRows.length)),
+      kpi("Уник. заказчиков",num(r.customers.length)),
+      kpi("Общий объём",fmt(r.totalSum)),
+      kpi("Объём побед",fmt(r.wonSum)),
+      kpi("Средний чек",fmt(avg)),
+      kpi("Медиана",fmt(r.median)),
+      kpi("Мин.",fmt(r.sums.length?Math.min(...r.sums):NaN)),
+      kpi("Макс.",fmt(r.sums.length?Math.max(...r.sums):NaN))
+    ));
+    app.appendChild(sec("Обнаруженные столбцы",body=>{
+      [["Дата",r.colDate],["Сумма",r.colSum],["Статус",r.colStatus],["Заказчик",r.colCustomer],["Предмет",r.colSubject],["Регион",r.colRegion],["Победитель",r.colWinner]].forEach(([l,v])=>body.appendChild(h("div",{style:{fontSize:"12px",lineHeight:"1.8"}},h("b",{},l+": "),v?h("span",{className:"col-found"},v):h("span",{className:"col-missing"},"не найден"))));
+      body.appendChild(h("div",{style:{marginTop:"8px",color:"#888",fontSize:"12px"}},"Все столбцы: "+r.cols.join(", ")));
+    }));
+  }
+
+  if(tab===1){
+    const ya=Object.entries(r.byYear).sort((a,b)=>a[0]-b[0]);
+    app.appendChild(sec("По годам",body=>body.appendChild(tbl(["Год","Тендеров","Выиграно","Win-rate","Объём","Ср. чек"],ya.map(([y,rows])=>[y,num(rows.length),num(rows.filter(x=>x._s==="won").length),pct(wr(rows)),fmt(rows.reduce((a,b)=>a+(b._sum||0),0)),fmt(rows.reduce((a,b)=>a+(b._sum||0),0)/(rows.filter(x=>x._sum).length||1))])))));
+    const ma=Object.entries(r.byMonth).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,24).reverse();
+    app.appendChild(sec("По месяцам (последние 24)",body=>body.appendChild(tbl(["Месяц","Тендеров","Выиграно","Win-rate","Объём"],ma.map(([m,rows])=>[m,num(rows.length),num(rows.filter(x=>x._s==="won").length),pct(wr(rows)),fmt(rows.reduce((a,b)=>a+(b._sum||0),0))])))));
+  }
+
+  if(tab===2){
+    const ca=Object.entries(r.custStats).sort((a,b)=>b[1].total-a[1].total);
+    const cs=Object.entries(r.custStats).sort((a,b)=>b[1].sum-a[1].sum);
+    app.appendChild(sec("Топ заказчиков по количеству",body=>body.appendChild(tbl(["Заказчик","Тендеров","Выиграно","Win-rate","Объём"],ca.slice(0,30).map(([k,v])=>[k,num(v.total),num(v.won),pct(v.total>0?v.won/v.total:NaN),fmt(v.sum)])))));
+    app.appendChild(sec("Топ заказчиков по объёму",body=>body.appendChild(tbl(["Заказчик","Объём","Тендеров","Выиграно","Win-rate"],cs.slice(0,20).map(([k,v])=>[k,fmt(v.sum),num(v.total),num(v.won),pct(v.total>0?v.won/v.total:NaN)])))));
+    app.appendChild(sec("Топ по числу побед",body=>body.appendChild(tbl(["Заказчик","Побед","Тендеров","Win-rate"],[...ca].sort((a,b)=>b[1].won-a[1].won).slice(0,20).map(([k,v])=>[k,num(v.won),num(v.total),pct(v.total>0?v.won/v.total:NaN)])))));
+    const vul=ca.filter(([,v])=>v.total>=2&&v.won/v.total<0.3);
+    app.appendChild(sec("Уязвимые: высокая активность, низкий win-rate",body=>body.appendChild(tbl(["Заказчик","Тендеров","Побед","Win-rate"],vul.slice(0,20).map(([k,v])=>[k,num(v.total),num(v.won),pct(v.won/v.total)])))));
+  }
+
+  if(tab===3){
+    const ca=Object.entries(r.catStats).sort((a,b)=>b[1].total-a[1].total);
+    app.appendChild(sec("По категориям",body=>body.appendChild(tbl(["Категория","Тендеров","Выиграно","Win-rate","Объём"],ca.map(([k,v])=>[k,num(v.total),num(v.won),pct(v.total>0?v.won/v.total:NaN),fmt(v.sum)])))));
+    if(r.colSubject)app.appendChild(sec("Примеры предметов",body=>body.appendChild(tbl(["Предмет","Сумма","Статус"],r.rows.filter(x=>x._subject).slice(0,50).map(x=>[String(x._subject).slice(0,90),fmt(x._sum),x._s==="won"?"Выиграно":x._s==="lost"?"Проиграно":"—"])))));
+  }
+
+  if(tab===4){
+    app.appendChild(sec("По ценовым диапазонам",body=>body.appendChild(tbl(["Диапазон","Тендеров","Доля","Выиграно","Win-rate","Объём"],r.rangeStats.map(rs=>[rs.label,num(rs.total),pct(rs.total/r.rows.length),num(rs.won),pct(rs.won/((rs.won+rs.lost)||1)),fmt(rs.sum)])))));
+  }
+
+  if(tab===5){
+    const ra=Object.entries(r.regionStats).sort((a,b)=>b[1].total-a[1].total).filter(([k])=>k!=="—");
+    if(ra.length>0)app.appendChild(sec("По регионам",body=>body.appendChild(tbl(["Регион","Тендеров","Выиграно","Win-rate"],ra.slice(0,30).map(([k,v])=>[k,num(v.total),num(v.won),pct(v.won/(v.total||1))])))));
+    else app.appendChild(h("div",{className:"empty-msg"},"Данные о регионах не обнаружены в файле."));
+  }
+}
+
+function processFile(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:"array",cellDates:true});
+      const sn=wb.SheetNames[0],ws=wb.Sheets[sn];
+      const raw=XLSX.utils.sheet_to_json(ws,{defval:null});
+      if(!raw.length){alert("Файл пуст.");return}
+      const cols=Object.keys(raw[0]);
+      const fc=kw=>cols.find(c=>kw.some(k=>c.toLowerCase().includes(k)))||null;
+      const cD=fc(["дата","date","публикац","размещ","начал"]);
+      const cS=fc(["сумм","цена","нмцк","стоим","бюджет","price"]);
+      const cSt=fc(["статус","результ","итог","winner","победит"]);
+      const cC=fc(["заказчик","организац","покупател","клиент","customer"]);
+      const cSu=fc(["предмет","наименован","описан","товар","объект","subject","name"]);
+      const cR=fc(["регион","город","субъект","location","region"]);
+      const cW=fc(["поставщик","победитель","исполнитель","участник"]);
+
+      const rows=raw.map((r,i)=>{
+        let date=null;
+        if(cD&&r[cD]){const d=new Date(r[cD]);if(!isNaN(d))date=d;else{const s=parseFloat(r[cD]);if(!isNaN(s)){const ed=new Date((s-25569)*864e5);if(!isNaN(ed))date=ed}}}
+        let sum=null;
+        if(cS&&r[cS]!=null&&r[cS]!==""){const s=parseFloat(String(r[cS]).replace(/[^\d.,-]/g,"").replace(",","."));if(!isNaN(s))sum=s}
+        let st="unknown";
+        if(cSt&&r[cSt]){const v=String(r[cSt]).toLowerCase();if(v.includes("выигр")||v.includes("победа")||v.includes("win")||v.includes("заключ")||v.includes("контракт"))st="won";else if(v.includes("проигр")||v.includes("отклон")||v.includes("не выигр")||v.includes("lose")||v.includes("lost"))st="lost";else if(v.includes("участ"))st="participated"}
+        if(st==="unknown"&&cW&&r[cW]){const v=String(r[cW]).toLowerCase();if(v.includes("социализм")||v.includes("socialism"))st="won"}
+        const subject=cSu?(r[cSu]||""):"";
+        let cat="Прочее";const sl=String(subject).toLowerCase();
+        for(const c of CATEGORIES){if(c.keys.some(k=>sl.includes(k))){cat=c.label;break}}
+        return{...r,_date:date,_sum:sum,_s:st,_cust:cC?(r[cC]||"Не указан"):"—",_subject:subject,_cat:cat,_reg:cR?(r[cR]||"—"):"—",_i:i};
+      });
+
+      const dates=rows.map(r=>r._date).filter(Boolean).sort((a,b)=>a-b);
+      const sums=rows.map(r=>r._sum).filter(v=>v!=null&&!isNaN(v));
+      const totalSum=sums.reduce((a,b)=>a+b,0);
+      const wonRows=rows.filter(r=>r._s==="won");
+      const lostRows=rows.filter(r=>r._s==="lost");
+      const wonSum=wonRows.map(r=>r._sum).filter(v=>v!=null).reduce((a,b)=>a+b,0);
+      const ss=[...sums].sort((a,b)=>a-b);
+      const median=ss.length?ss[Math.floor(ss.length/2)]:null;
+      const customers=[...new Set(rows.map(r=>r._cust).filter(c=>c&&c!=="—"&&c!=="Не указан"))];
+
+      const byYear={},byMonth={},custStats={},catStats={},regionStats={};
+      rows.forEach(r=>{
+        if(r._date){const y=r._date.getFullYear();if(!byYear[y])byYear[y]=[];byYear[y].push(r);const mk=`${y}-${String(r._date.getMonth()+1).padStart(2,"0")}`;if(!byMonth[mk])byMonth[mk]=[];byMonth[mk].push(r)}
+        const c=r._cust;if(!custStats[c])custStats[c]={total:0,won:0,lost:0,sum:0};custStats[c].total++;custStats[c].sum+=r._sum||0;if(r._s==="won")custStats[c].won++;if(r._s==="lost")custStats[c].lost++;
+        const ct=r._cat;if(!catStats[ct])catStats[ct]={total:0,won:0,lost:0,sum:0};catStats[ct].total++;catStats[ct].sum+=r._sum||0;if(r._s==="won")catStats[ct].won++;if(r._s==="lost")catStats[ct].lost++;
+        const rg=r._reg||"—";if(!regionStats[rg])regionStats[rg]={total:0,won:0};regionStats[rg].total++;if(r._s==="won")regionStats[rg].won++;
+      });
+      const rangeStats=RANGES.map(range=>{const rr=rows.filter(r=>r._sum!=null&&r._sum>=range.min&&r._sum<range.max);return{...range,total:rr.length,sum:rr.reduce((a,b)=>a+(b._sum||0),0),won:rr.filter(r=>r._s==="won").length,lost:rr.filter(r=>r._s==="lost").length}});
+
+      R={rows,cols,colDate:cD,colSum:cS,colStatus:cSt,colCustomer:cC,colSubject:cSu,colRegion:cR,colWinner:cW,periodStart:dates[0]||null,periodEnd:dates[dates.length-1]||null,sums,totalSum,wonSum,median,customers,custStats,catStats,rangeStats,regionStats,byYear,byMonth,wonRows,lostRows,sheetName:sn};
+      tab=0;render();
+    }catch(err){alert("Ошибка: "+err.message)}
+  };
+  reader.readAsArrayBuffer(file);
+}
+render();
+</script>
+</body>
+</html>
