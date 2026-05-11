@@ -377,15 +377,24 @@ function processFile(file){
       const colCustomer=fc(["заказчик","организац","покупател","клиент","customer"]);
       const colSubject=fc(["предмет","наименован","описан","товар","объект","subject","name"]);
       const colMethod=fc(["способ","метод","тип закупк","вид закупк","отбор","процедур"]);
-      const colContractDate=fc(["дата контракт","дата договор","дата заключ"]);
+      const colContractDate=fc(["дата контракт","дата договор","дата заключ","контракта/договора"]);
       const colExecDate=fc(["срок исполн","дата исполн","срок поставк","дата окончан","срок оконч"]);
       const colWinner=fc(["поставщик","победитель","исполнитель","участник"]);
 
       function parseDate(v){
         if(!v)return null;
         if(v instanceof Date&&!isNaN(v))return v;
+        // Try dd.mm.yyyy or dd/mm/yyyy or dd-mm-yyyy
+        const str=String(v).trim();
+        const m1=str.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/);
+        if(m1){const d=new Date(+m1[3],+m1[2]-1,+m1[1]);if(!isNaN(d))return d}
+        // Try yyyy-mm-dd
+        const m2=str.match(/^(\d{4})[.\/-](\d{1,2})[.\/-](\d{1,2})/);
+        if(m2){const d=new Date(+m2[1],+m2[2]-1,+m2[3]);if(!isNaN(d))return d}
+        // Try native
         const d=new Date(v);if(!isNaN(d))return d;
-        const s=parseFloat(v);if(!isNaN(s)){const ed=new Date((s-25569)*864e5);if(!isNaN(ed))return ed}
+        // Try Excel serial
+        const s=parseFloat(v);if(!isNaN(s)&&s>30000&&s<60000){const ed=new Date((s-25569)*864e5);if(!isNaN(ed))return ed}
         return null;
       }
       function parseNum(v){
