@@ -86,8 +86,8 @@ const CATEGORIES=[
 function fmt(n){if(n==null||isNaN(n))return"\u2014";if(n>=1e9)return(n/1e9).toFixed(1)+" \u043C\u043B\u0440\u0434 \u20BD";if(n>=1e6)return(n/1e6).toFixed(1)+" \u043C\u043B\u043D \u20BD";if(n>=1e3)return(n/1e3).toFixed(0)+" \u0442\u044B\u0441. \u20BD";return n.toFixed(0)+" \u20BD"}
 function pct(n){return isNaN(n)?"\u2014":(n*100).toFixed(1)+"%"}
 function num(n){return isNaN(n)||n===undefined?"\u2014":n.toLocaleString("ru")}
-// Win-rate: wins / total
-function calcWR(rows){const w=rows.filter(r=>r._s==="won").length;return rows.length>0?w/rows.length:NaN}
+// Win-rate: wins / (wins + losses)
+function calcWR(rows){const w=rows.filter(r=>r._s==="won").length,l=rows.filter(r=>r._s==="lost").length;return(w+l)>0?w/(w+l):NaN}
 function daysDiff(a,b){if(!a||!b)return null;return Math.round(Math.abs(b-a)/(864e5))}
 function h(t,a,...c){const e=document.createElement(t);if(a)Object.entries(a).forEach(([k,v])=>{if(k==="style"&&typeof v==="object")Object.assign(e.style,v);else if(k.startsWith("on"))e.addEventListener(k.slice(2).toLowerCase(),v);else if(k==="className")e.className=v;else e.setAttribute(k,v)});c.flat(9).forEach(x=>{if(x!=null)e.appendChild(typeof x==="string"?document.createTextNode(x):x)});return e}
 
@@ -228,6 +228,7 @@ function renderReport(app){
 function renderSummary(app,r){
   const avg=r.sums.length?r.sums.reduce((a,b)=>a+b,0)/r.sums.length:NaN;
   const w=calcWR(r.rows);
+  const unknownCount=r.rows.filter(x=>x._s==="unknown").length;
 
   // Avg price drop
   let avgDrop=NaN;
@@ -245,7 +246,7 @@ function renderSummary(app,r){
     h("div",{className:"kpi-row"},
       kpi("\u0412\u0441\u0435\u0433\u043E \u0442\u0435\u043D\u0434\u0435\u0440\u043E\u0432",num(r.rows.length)),
       kpi("\u0412\u044B\u0438\u0433\u0440\u0430\u043D\u043E",num(r.wonRows.length),pct(w)+" win-rate"),
-      kpi("\u041F\u0440\u043E\u0438\u0433\u0440\u0430\u043D\u043E",num(r.lostRows.length)),
+      kpi("\u041F\u0440\u043E\u0438\u0433\u0440\u0430\u043D\u043E",num(r.lostRows.length),unknownCount>0?unknownCount+" \u0431\u0435\u0437 \u0441\u0442\u0430\u0442\u0443\u0441\u0430":null),
       kpi("\u0423\u043D\u0438\u043A. \u0437\u0430\u043A\u0430\u0437\u0447\u0438\u043A\u043E\u0432",num(r.customers.length))
     ),
     h("div",{className:"kpi-row"},
@@ -380,7 +381,7 @@ function processFile(file){
       const colEndPrice=fc(["конечн","итогов","цена контракт","цена договор"]);
       const colStartPrice=fc(["начальн","нмцк","сумм"]);
       const colPriceDrop=fc(["падени","снижен","дисконт","скидк"]);
-      const colStatus=fc(["статус","результ","итог","winner","победит"]);
+      const colStatus=fc(["результат","статус","итог","winner","победит"]);
       const colCustomer=fc(["заказчик","организац","покупател","клиент","customer"]);
       const colSubject=fc(["предмет","наименован","описан","товар","объект","subject","name"]);
       const colMethod=fc(["способ","метод","тип закупк","вид закупк","отбор","процедур"]);
@@ -449,12 +450,13 @@ function processFile(file){
 
         let st="unknown";
         if(colStatus&&r[colStatus]){
-          const v=String(r[colStatus]).toLowerCase();
-          if(v.includes("выигр")||v.includes("победа")||v.includes("win")||v.includes("заключ")||v.includes("контракт"))st="won";
-          else if(v.includes("проигр")||v.includes("отклон")||v.includes("не выигр")||v.includes("lose")||v.includes("lost"))st="lost";
-          else if(v.includes("участ"))st="participated";
+          const v=String(r[colStatus]).toLowerCase().trim();
+          // WON: "Выиграно", "Контракт заключён"
+          if(v.includes("выигран")||v==="выиграно"||v.includes("контракт заключ")||v.includes("контракт заключён")||v.includes("победа")||v==="win")st="won";
+          // LOST: "Не выиграно", "Закупка отменена", "Исполнение прекращено", "Исход опред.не удалось"
+          else if(v.includes("не выигран")||v.includes("отменен")||v.includes("отменён")||v.includes("прекращен")||v.includes("прекращён")||v.includes("исход")||v.includes("не удалось")||v.includes("проигр")||v.includes("отклон")||v.includes("lose")||v.includes("lost")||v.includes("не состоял"))st="lost";
         }
-        if(st==="unknown"&&colWinner&&r[colWinner]){const v=String(r[colWinner]).toLowerCase();if(v.includes("социализм")||v.includes("socialism"))st="won"}
+        if(st==="unknown"&&colWinner&&r[colWinner]){const wv=String(r[colWinner]).toLowerCase();if(wv.includes("социализм")||wv.includes("socialism"))st="won"}
 
         const subject=colSubject?(r[colSubject]||""):"";
         let cat="Прочее";const sl=String(subject).toLowerCase();
