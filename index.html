@@ -4,47 +4,62 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ADMOS — Конкурентный анализ тендеров</title>
+<meta name="theme-color" content="#fe5000">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  :root{--bg:#fff;--text:#1a1a2e;--muted:#666;--light:#888;--accent:#1a1a2e;--accent-light:#f5f7ff;--border:#e0e0e0;--border-accent:#d0d7f5;--hover:#eef0fc;--danger:#c0392b;--success:#2e7d32;--row-alt:#f9fafb}
+  :root{--brand:#fe5000;--brand-dark:#d44400;--brand-light:#fff4ee;--brand-border:#ffd6b8;--text:#2c2c2c;--muted:#666;--light:#999;--bg:#fff;--border:#e5e5e5;--row-alt:#fafafa;--success:#1a8a3f;--danger:#c0392b}
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
-  .container{max-width:960px;margin:0 auto;padding:16px}
-  .header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px}
-  .header h1{font-size:20px;font-weight:700}
-  .header .sub{font-size:12px;color:var(--light)}
-  .btn{font-size:12px;background:#eee;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-family:inherit}
-  .btn:hover{background:#ddd}
-  .tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px}
-  .tab{padding:6px 14px;font-size:12px;border-radius:6px;border:none;cursor:pointer;background:#eee;color:#333;font-weight:400;font-family:inherit}
-  .tab.active{background:var(--accent);color:#fff;font-weight:600}
-  .kpi-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
-  .kpi{background:var(--accent-light);border:1px solid var(--border-accent);border-radius:8px;padding:12px 16px;min-width:140px;flex:1 1 140px}
-  .kpi-label{font-size:11px;color:var(--muted);margin-bottom:4px}
-  .kpi-value{font-size:20px;font-weight:700;color:var(--accent)}
-  .kpi-sub{font-size:11px;color:var(--light);margin-top:2px}
-  .section{margin-bottom:24px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
-  .section-head{background:var(--accent);color:#fff;padding:10px 16px;cursor:pointer;font-weight:600;font-size:14px;display:flex;justify-content:space-between;user-select:none}
+  body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:#f7f7f7;color:var(--text);line-height:1.5}
+  .container{max-width:980px;margin:0 auto;padding:20px}
+  .card{background:var(--bg);border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:20px;margin-bottom:20px}
+  .header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+  .logo-bar{display:flex;align-items:center;gap:12px}
+  .logo-mark{width:36px;height:36px;background:var(--brand);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px}
+  .header h1{font-size:18px;font-weight:700;color:var(--text)}
+  .header .sub{font-size:11px;color:var(--light)}
+  .btn{font-size:12px;background:#f0f0f0;border:1px solid var(--border);border-radius:6px;padding:5px 12px;cursor:pointer;font-family:inherit;color:var(--text)}
+  .btn:hover{background:#e8e8e8}
+  .tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:20px}
+  .tab{padding:7px 16px;font-size:12px;border-radius:20px;border:1px solid var(--border);cursor:pointer;background:#fff;color:var(--muted);font-weight:500;font-family:inherit;transition:all .15s}
+  .tab.active{background:var(--brand);color:#fff;border-color:var(--brand);font-weight:600}
+  .tab:hover:not(.active){background:var(--brand-light);border-color:var(--brand-border);color:var(--brand)}
+  .kpi-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+  .kpi{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px;min-width:135px;flex:1 1 135px;border-left:3px solid var(--brand)}
+  .kpi-label{font-size:10px;color:var(--light);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+  .kpi-value{font-size:22px;font-weight:700;color:var(--text)}
+  .kpi-sub{font-size:10px;color:var(--brand);margin-top:2px;font-weight:500}
+  .section{margin-bottom:20px;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg)}
+  .section-head{background:var(--brand);color:#fff;padding:10px 16px;cursor:pointer;font-weight:600;font-size:13px;display:flex;justify-content:space-between;user-select:none}
+  .section-head:hover{background:var(--brand-dark)}
   .section-body{padding:16px}
   table{width:100%;border-collapse:collapse;font-size:12px}
-  thead tr{background:var(--hover)}
-  th{padding:6px 10px;text-align:right;white-space:nowrap;border-bottom:2px solid var(--border-accent)}
+  thead tr{background:var(--brand-light)}
+  th{padding:8px 10px;text-align:right;white-space:nowrap;border-bottom:2px solid var(--brand-border);color:var(--brand-dark);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.3px}
   th:first-child{text-align:left}
-  td{padding:5px 10px;border-bottom:1px solid #eee;text-align:right}
+  td{padding:6px 10px;border-bottom:1px solid #f0f0f0;text-align:right}
   td:first-child{text-align:left}
   tr:nth-child(even){background:var(--row-alt)}
-  .drop-zone{border:2px dashed #7c83e0;border-radius:12px;padding:48px;text-align:center;background:var(--accent-light);cursor:pointer}
-  .drop-zone:hover{border-color:var(--accent)}
-  .drop-icon{font-size:36px;margin-bottom:12px}
-  .drop-title{font-weight:600;color:var(--accent);margin-bottom:8px}
+  .drop-zone{border:2px dashed var(--brand-border);border-radius:16px;padding:56px 24px;text-align:center;background:var(--brand-light);cursor:pointer;transition:border-color .2s}
+  .drop-zone:hover{border-color:var(--brand)}
+  .drop-icon{font-size:40px;margin-bottom:12px}
+  .drop-title{font-weight:600;color:var(--brand);margin-bottom:8px;font-size:16px}
   .drop-hint{font-size:12px;color:var(--light)}
-  .col-found{color:var(--success)}
+  .col-found{color:var(--success);font-weight:500}
   .col-missing{color:var(--danger)}
-  .empty-msg{color:var(--light);padding:16px;background:#f5f5f5;border-radius:8px}
-  .show-more{margin-top:6px;font-size:11px;color:#555;background:none;border:1px solid #ccc;border-radius:4px;padding:3px 10px;cursor:pointer;font-family:inherit}
+  .empty-msg{color:var(--light);padding:16px;background:var(--brand-light);border-radius:8px;border:1px solid var(--brand-border)}
+  .show-more{margin-top:8px;font-size:11px;color:var(--brand);background:none;border:1px solid var(--brand-border);border-radius:4px;padding:4px 12px;cursor:pointer;font-family:inherit}
+  .show-more:hover{background:var(--brand-light)}
   .export-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-  .btn-export{font-size:12px;background:#2e7d32;color:#fff;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-family:inherit}
-  .btn-export:hover{opacity:.9}
+  .btn-export{font-size:12px;background:var(--brand);color:#fff;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-family:inherit;font-weight:500}
+  .btn-export:hover{background:var(--brand-dark)}
+  .chart-wrap{margin-top:16px;padding:12px;background:var(--brand-light);border-radius:10px;border:1px solid var(--brand-border)}
+  .chart-title{font-size:12px;font-weight:600;color:var(--brand-dark);margin-bottom:12px}
+  .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .bar-label{width:70px;font-size:11px;color:var(--muted);text-align:right;flex-shrink:0}
+  .bar-track{flex:1;height:22px;background:#fff;border-radius:4px;overflow:hidden;border:1px solid var(--brand-border)}
+  .bar-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand-dark));border-radius:3px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;min-width:2px;transition:width .3s}
+  .bar-val{font-size:10px;color:#fff;font-weight:600}
+  .powered{text-align:center;margin-top:20px;font-size:10px;color:var(--light);padding-bottom:12px}
   @media print{.tabs,.btn,.export-bar,.show-more,.drop-zone{display:none!important}.section-head{cursor:default}}
 </style>
 </head>
@@ -67,14 +82,17 @@ const CATEGORIES=[
   {label:"Мероприятия",keys:["меропри","event","праздник","корпоратив"]},
   {label:"Услуги агентства",keys:["услуг","агентств","разработк","дизайн","креатив"]}
 ];
-function fmt(n){if(n==null||isNaN(n))return"—";if(n>=1e9)return(n/1e9).toFixed(1)+" млрд \u20BD";if(n>=1e6)return(n/1e6).toFixed(1)+" млн \u20BD";if(n>=1e3)return(n/1e3).toFixed(0)+" тыс. \u20BD";return n.toFixed(0)+" \u20BD"}
-function pct(n){return isNaN(n)?"—":(n*100).toFixed(1)+"%"}
-function num(n){return isNaN(n)||n===undefined?"—":n.toLocaleString("ru")}
-function wr(rows){const w=rows.filter(r=>r._s==="won").length,d=rows.filter(r=>r._s==="won"||r._s==="lost").length;return d>0?w/d:NaN}
+
+function fmt(n){if(n==null||isNaN(n))return"\u2014";if(n>=1e9)return(n/1e9).toFixed(1)+" \u043C\u043B\u0440\u0434 \u20BD";if(n>=1e6)return(n/1e6).toFixed(1)+" \u043C\u043B\u043D \u20BD";if(n>=1e3)return(n/1e3).toFixed(0)+" \u0442\u044B\u0441. \u20BD";return n.toFixed(0)+" \u20BD"}
+function pct(n){return isNaN(n)?"\u2014":(n*100).toFixed(1)+"%"}
+function num(n){return isNaN(n)||n===undefined?"\u2014":n.toLocaleString("ru")}
+// Win-rate: wins / total
+function calcWR(rows){const w=rows.filter(r=>r._s==="won").length;return rows.length>0?w/rows.length:NaN}
+function daysDiff(a,b){if(!a||!b)return null;return Math.round(Math.abs(b-a)/(864e5))}
 function h(t,a,...c){const e=document.createElement(t);if(a)Object.entries(a).forEach(([k,v])=>{if(k==="style"&&typeof v==="object")Object.assign(e.style,v);else if(k.startsWith("on"))e.addEventListener(k.slice(2).toLowerCase(),v);else if(k==="className")e.className=v;else e.setAttribute(k,v)});c.flat(9).forEach(x=>{if(x!=null)e.appendChild(typeof x==="string"?document.createTextNode(x):x)});return e}
 
 let R=null,tab=0;
-const tabs=["Сводка","Динамика","Заказчики","Категории","Диапазоны","Регионы"];
+const tabs=["\u0421\u0432\u043E\u0434\u043A\u0430","\u0414\u0438\u043D\u0430\u043C\u0438\u043A\u0430","\u0417\u0430\u043A\u0430\u0437\u0447\u0438\u043A\u0438","\u041A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438","\u0414\u0438\u0430\u043F\u0430\u0437\u043E\u043D\u044B","\u0418\u043D\u0441\u0430\u0439\u0442\u044B"];
 
 function render(){
   const app=document.getElementById("app");app.innerHTML="";
@@ -87,16 +105,23 @@ function renderUpload(app){
   fi.addEventListener("change",e=>{if(e.target.files[0])processFile(e.target.files[0])});
   const zone=h("div",{className:"drop-zone",onClick:()=>fi.click()},
     h("div",{className:"drop-icon"},"\uD83D\uDCCA"),
-    h("div",{className:"drop-title"},"Перетащите файл или нажмите для выбора"),
-    h("div",{className:"drop-hint"},"Поддерживается: .xlsx, .xls")
+    h("div",{className:"drop-title"},"\u041F\u0435\u0440\u0435\u0442\u0430\u0449\u0438\u0442\u0435 \u0444\u0430\u0439\u043B \u0438\u043B\u0438 \u043D\u0430\u0436\u043C\u0438\u0442\u0435 \u0434\u043B\u044F \u0432\u044B\u0431\u043E\u0440\u0430"),
+    h("div",{className:"drop-hint"},"\u041F\u043E\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442\u0441\u044F: .xlsx, .xls")
   );
   zone.addEventListener("dragover",e=>e.preventDefault());
   zone.addEventListener("drop",e=>{e.preventDefault();if(e.dataTransfer.files[0])processFile(e.dataTransfer.files[0])});
-  app.append(
-    h("h2",{style:{color:"var(--accent)",marginBottom:"8px"}},"Конкурентный анализ тендеров"),
-    h("p",{style:{color:"#555",marginBottom:"24px",fontSize:"14px"}},"Загрузите Excel-файл с данными тендеров конкурента для автоматического анализа. Инструмент ADMOS."),
-    zone,fi
+  const card=h("div",{className:"card"},
+    h("div",{className:"logo-bar",style:{marginBottom:"16px"}},
+      h("div",{className:"logo-mark"},"A"),
+      h("div",{},
+        h("div",{style:{fontWeight:700,fontSize:"16px"}},"ADMOS \u2014 \u041A\u043E\u043D\u043A\u0443\u0440\u0435\u043D\u0442\u043D\u044B\u0439 \u0430\u043D\u0430\u043B\u0438\u0437 \u0442\u0435\u043D\u0434\u0435\u0440\u043E\u0432"),
+        h("div",{style:{fontSize:"12px",color:"var(--light)"}},"\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 Excel-\u0444\u0430\u0439\u043B \u0441 \u0434\u0430\u043D\u043D\u044B\u043C\u0438 \u0442\u0435\u043D\u0434\u0435\u0440\u043E\u0432 \u043A\u043E\u043D\u043A\u0443\u0440\u0435\u043D\u0442\u0430")
+      )
+    ),
+    zone, fi
   );
+  app.appendChild(card);
+  app.appendChild(h("div",{className:"powered"},"\u0418\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 ADMOS \u00B7 admos-gifts.ru"));
 }
 
 function sec(title,fn){
@@ -118,8 +143,8 @@ function tbl(cols,rows,mx=20){
     const btn=h("button",{className:"show-more",onClick:()=>{
       exp=!exp;tbody.innerHTML="";
       (exp?rows:show).forEach(r=>tbody.appendChild(h("tr",{},...r.map(c=>h("td",{},String(c))))));
-      btn.textContent=exp?"Свернуть":`Показать все (${rows.length})`;
-    }},`Показать все (${rows.length})`);
+      btn.textContent=exp?"\u0421\u0432\u0435\u0440\u043D\u0443\u0442\u044C":`\u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u0432\u0441\u0435 (${rows.length})`;
+    }},`\u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u0432\u0441\u0435 (${rows.length})`);
     return h("div",{},wrap,btn);
   }
   return wrap;
@@ -131,110 +156,207 @@ function kpi(l,v,s){
   return h("div",{className:"kpi"},...els);
 }
 
+function barChart(title,data){
+  // data: [{label, value}]
+  const max=Math.max(...data.map(d=>d.value),1);
+  const wrap=h("div",{className:"chart-wrap"},h("div",{className:"chart-title"},title));
+  data.forEach(d=>{
+    const pctW=Math.max((d.value/max)*100,1);
+    wrap.appendChild(h("div",{className:"bar-row"},
+      h("div",{className:"bar-label"},d.label),
+      h("div",{className:"bar-track"},
+        h("div",{className:"bar-fill",style:{width:pctW+"%"}},
+          h("span",{className:"bar-val"},String(d.value))
+        )
+      )
+    ));
+  });
+  return wrap;
+}
+
 function exportCSV(){
   if(!R)return;
-  const sep=";";
-  let csv="\uFEFF";// BOM for Excel
-  // Summary
-  csv+="Показатель"+sep+"Значение\n";
-  csv+="Всего тендеров"+sep+R.rows.length+"\n";
-  csv+="Выиграно"+sep+R.wonRows.length+"\n";
-  csv+="Проиграно"+sep+R.lostRows.length+"\n";
-  csv+="Win-rate"+sep+pct(wr(R.rows))+"\n";
-  csv+="Общий объём"+sep+R.totalSum+"\n";
-  csv+="Объём побед"+sep+R.wonSum+"\n\n";
-  // Customers
-  csv+="Заказчик"+sep+"Тендеров"+sep+"Выиграно"+sep+"Win-rate"+sep+"Объём\n";
+  const s=";";let csv="\uFEFF";
+  csv+="\u041F\u043E\u043A\u0430\u0437\u0430\u0442\u0435\u043B\u044C"+s+"\u0417\u043D\u0430\u0447\u0435\u043D\u0438\u0435\n";
+  csv+="\u0412\u0441\u0435\u0433\u043E \u0442\u0435\u043D\u0434\u0435\u0440\u043E\u0432"+s+R.rows.length+"\n";
+  csv+="\u0412\u044B\u0438\u0433\u0440\u0430\u043D\u043E"+s+R.wonRows.length+"\n";
+  csv+="\u041F\u0440\u043E\u0438\u0433\u0440\u0430\u043D\u043E"+s+R.lostRows.length+"\n";
+  csv+="Win-rate"+s+pct(calcWR(R.rows))+"\n";
+  csv+="\u041E\u0431\u0449\u0438\u0439 \u043E\u0431\u044A\u0451\u043C"+s+R.totalSum+"\n";
+  csv+="\u041E\u0431\u044A\u0451\u043C \u043F\u043E\u0431\u0435\u0434"+s+R.wonSum+"\n\n";
+  csv+="\u0417\u0430\u043A\u0430\u0437\u0447\u0438\u043A"+s+"\u0422\u0435\u043D\u0434\u0435\u0440\u043E\u0432"+s+"\u0412\u044B\u0438\u0433\u0440\u0430\u043D\u043E"+s+"Win-rate"+s+"\u041E\u0431\u044A\u0451\u043C\n";
   Object.entries(R.custStats).sort((a,b)=>b[1].total-a[1].total).forEach(([k,v])=>{
-    csv+=`"${k}"`+sep+v.total+sep+v.won+sep+pct(v.total>0?v.won/v.total:NaN)+sep+v.sum+"\n";
+    csv+=`"${k}"`+s+v.total+s+v.won+s+pct(v.total>0?v.won/v.total:NaN)+s+v.sum+"\n";
   });
-  csv+="\n";
-  // Categories
-  csv+="Категория"+sep+"Тендеров"+sep+"Выиграно"+sep+"Win-rate"+sep+"Объём\n";
+  csv+="\n\u041A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044F"+s+"\u0422\u0435\u043D\u0434\u0435\u0440\u043E\u0432"+s+"\u0412\u044B\u0438\u0433\u0440\u0430\u043D\u043E"+s+"Win-rate"+s+"\u041E\u0431\u044A\u0451\u043C\n";
   Object.entries(R.catStats).sort((a,b)=>b[1].total-a[1].total).forEach(([k,v])=>{
-    csv+=k+sep+v.total+sep+v.won+sep+pct(v.total>0?v.won/v.total:NaN)+sep+v.sum+"\n";
-  });
-  csv+="\n";
-  // Ranges
-  csv+="Диапазон"+sep+"Тендеров"+sep+"Выиграно"+sep+"Win-rate"+sep+"Объём\n";
-  R.rangeStats.forEach(rs=>{
-    csv+=rs.label+sep+rs.total+sep+rs.won+sep+pct(rs.won/((rs.won+rs.lost)||1))+sep+rs.sum+"\n";
+    csv+=k+s+v.total+s+v.won+s+pct(v.total>0?v.won/v.total:NaN)+s+v.sum+"\n";
   });
   const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");a.href=url;a.download="tender_analysis_export.csv";a.click();
-  URL.revokeObjectURL(url);
+  const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="tender_analysis_export.csv";a.click();URL.revokeObjectURL(url);
 }
 
 function renderReport(app){
-  const r=R,w=wr(r.rows);
+  const r=R;
+  // Header
   app.appendChild(h("div",{className:"header"},
-    h("div",{},
-      h("h1",{},"Анализ тендеров конкурента"),
-      h("div",{className:"sub"},`Лист: ${r.sheetName} \xB7 Строк: ${r.rows.length} \xB7 Период: ${r.periodStart?r.periodStart.getFullYear()+"–"+r.periodEnd.getFullYear():"н/д"} \xB7 Для ADMOS`)
+    h("div",{className:"logo-bar"},
+      h("div",{className:"logo-mark"},"A"),
+      h("div",{},
+        h("h1",{},"\u0410\u043D\u0430\u043B\u0438\u0437 \u0442\u0435\u043D\u0434\u0435\u0440\u043E\u0432 \u043A\u043E\u043D\u043A\u0443\u0440\u0435\u043D\u0442\u0430"),
+        h("div",{className:"sub"},`\u041B\u0438\u0441\u0442: ${r.sheetName} \xB7 \u0421\u0442\u0440\u043E\u043A: ${r.rows.length} \xB7 \u041F\u0435\u0440\u0438\u043E\u0434: ${r.periodStart?r.periodStart.getFullYear()+"\u2013"+r.periodEnd.getFullYear():"\u043D/\u0434"}`)
+      )
     ),
-    h("button",{className:"btn",onClick:()=>{R=null;tab=0;render()}},"\u2190 Загрузить другой файл")
+    h("button",{className:"btn",onClick:()=>{R=null;tab=0;render()}},"\u2190 \u0414\u0440\u0443\u0433\u043E\u0439 \u0444\u0430\u0439\u043B")
   ));
   app.appendChild(h("div",{className:"export-bar"},
-    h("button",{className:"btn-export",onClick:exportCSV},"\u2B07 Экспорт CSV"),
-    h("button",{className:"btn",onClick:()=>window.print()},"\uD83D\uDDA8 Печать / PDF")
+    h("button",{className:"btn-export",onClick:exportCSV},"\u2B07 \u042D\u043A\u0441\u043F\u043E\u0440\u0442 CSV"),
+    h("button",{className:"btn",onClick:()=>window.print()},"\uD83D\uDDA8 \u041F\u0435\u0447\u0430\u0442\u044C / PDF")
   ));
   app.appendChild(h("div",{className:"tabs"},...tabs.map((t,i)=>h("button",{className:"tab"+(tab===i?" active":""),onClick:()=>{tab=i;render()}},t))));
 
-  if(tab===0){
-    const avg=r.sums.length?r.sums.reduce((a,b)=>a+b,0)/r.sums.length:NaN;
-    app.appendChild(h("div",{className:"kpi-row"},
-      kpi("Всего тендеров",num(r.rows.length)),
-      kpi("Выиграно",num(r.wonRows.length),pct(w)+" win-rate"),
-      kpi("Проиграно",num(r.lostRows.length)),
-      kpi("Уник. заказчиков",num(r.customers.length)),
-      kpi("Общий объём",fmt(r.totalSum)),
-      kpi("Объём побед",fmt(r.wonSum)),
-      kpi("Средний чек",fmt(avg)),
-      kpi("Медиана",fmt(r.median)),
-      kpi("Мин.",fmt(r.sums.length?Math.min(...r.sums):NaN)),
-      kpi("Макс.",fmt(r.sums.length?Math.max(...r.sums):NaN))
-    ));
-    app.appendChild(sec("Обнаруженные столбцы",body=>{
-      [["Дата",r.colDate],["Сумма",r.colSum],["Статус",r.colStatus],["Заказчик",r.colCustomer],["Предмет",r.colSubject],["Регион",r.colRegion],["Победитель",r.colWinner]].forEach(([l,v])=>body.appendChild(h("div",{style:{fontSize:"12px",lineHeight:"1.8"}},h("b",{},l+": "),v?h("span",{className:"col-found"},v):h("span",{className:"col-missing"},"не найден"))));
-      body.appendChild(h("div",{style:{marginTop:"8px",color:"#888",fontSize:"12px"}},"Все столбцы: "+r.cols.join(", ")));
-    }));
-  }
+  if(tab===0) renderSummary(app,r);
+  if(tab===1) renderDynamics(app,r);
+  if(tab===2) renderCustomers(app,r);
+  if(tab===3) renderCategories(app,r);
+  if(tab===4) renderRanges(app,r);
+  if(tab===5) renderInsights(app,r);
 
-  if(tab===1){
-    const ya=Object.entries(r.byYear).sort((a,b)=>a[0]-b[0]);
-    app.appendChild(sec("По годам",body=>body.appendChild(tbl(["Год","Тендеров","Выиграно","Win-rate","Объём","Ср. чек"],ya.map(([y,rows])=>[y,num(rows.length),num(rows.filter(x=>x._s==="won").length),pct(wr(rows)),fmt(rows.reduce((a,b)=>a+(b._sum||0),0)),fmt(rows.reduce((a,b)=>a+(b._sum||0),0)/(rows.filter(x=>x._sum).length||1))])))));
-    const ma=Object.entries(r.byMonth).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,24).reverse();
-    app.appendChild(sec("По месяцам (последние 24)",body=>body.appendChild(tbl(["Месяц","Тендеров","Выиграно","Win-rate","Объём"],ma.map(([m,rows])=>[m,num(rows.length),num(rows.filter(x=>x._s==="won").length),pct(wr(rows)),fmt(rows.reduce((a,b)=>a+(b._sum||0),0))])))));
-  }
+  app.appendChild(h("div",{className:"powered"},"ADMOS \u00B7 admos-gifts.ru"));
+}
 
-  if(tab===2){
-    const ca=Object.entries(r.custStats).sort((a,b)=>b[1].total-a[1].total);
-    const cs=Object.entries(r.custStats).sort((a,b)=>b[1].sum-a[1].sum);
-    app.appendChild(sec("Топ заказчиков по количеству",body=>body.appendChild(tbl(["Заказчик","Тендеров","Выиграно","Win-rate","Объём"],ca.slice(0,30).map(([k,v])=>[k,num(v.total),num(v.won),pct(v.total>0?v.won/v.total:NaN),fmt(v.sum)])))));
-    app.appendChild(sec("Топ заказчиков по объёму",body=>body.appendChild(tbl(["Заказчик","Объём","Тендеров","Выиграно","Win-rate"],cs.slice(0,20).map(([k,v])=>[k,fmt(v.sum),num(v.total),num(v.won),pct(v.total>0?v.won/v.total:NaN)])))));
-    app.appendChild(sec("Топ по числу побед",body=>body.appendChild(tbl(["Заказчик","Побед","Тендеров","Win-rate"],[...ca].sort((a,b)=>b[1].won-a[1].won).slice(0,20).map(([k,v])=>[k,num(v.won),num(v.total),pct(v.total>0?v.won/v.total:NaN)])))));
-    const vul=ca.filter(([,v])=>v.total>=2&&v.won/v.total<0.3);
-    app.appendChild(sec("Уязвимые: высокая активность, низкий win-rate",body=>body.appendChild(tbl(["Заказчик","Тендеров","Побед","Win-rate"],vul.slice(0,20).map(([k,v])=>[k,num(v.total),num(v.won),pct(v.won/v.total)])))));
-  }
+function renderSummary(app,r){
+  const avg=r.sums.length?r.sums.reduce((a,b)=>a+b,0)/r.sums.length:NaN;
+  const w=calcWR(r.rows);
 
-  if(tab===3){
-    const ca=Object.entries(r.catStats).sort((a,b)=>b[1].total-a[1].total);
-    app.appendChild(sec("По категориям",body=>body.appendChild(tbl(["Категория","Тендеров","Выиграно","Win-rate","Объём"],ca.map(([k,v])=>[k,num(v.total),num(v.won),pct(v.total>0?v.won/v.total:NaN),fmt(v.sum)])))));
-    if(r.colSubject)app.appendChild(sec("Примеры предметов",body=>body.appendChild(tbl(["Предмет","Сумма","Статус"],r.rows.filter(x=>x._subject).slice(0,50).map(x=>[String(x._subject).slice(0,90),fmt(x._sum),x._s==="won"?"Выиграно":x._s==="lost"?"Проиграно":"—"])))));
-  }
+  // Avg price drop
+  let avgDrop=NaN;
+  if(r.priceDrop.length>0) avgDrop=r.priceDrop.reduce((a,b)=>a+b,0)/r.priceDrop.length;
 
-  if(tab===4){
-    app.appendChild(sec("По ценовым диапазонам",body=>body.appendChild(tbl(["Диапазон","Тендеров","Доля","Выиграно","Win-rate","Объём"],r.rangeStats.map(rs=>[rs.label,num(rs.total),pct(rs.total/r.rows.length),num(rs.won),pct(rs.won/((rs.won+rs.lost)||1)),fmt(rs.sum)])))));
-  }
+  // Avg contract execution days
+  let avgExec=NaN;
+  if(r.execDays.length>0) avgExec=Math.round(r.execDays.reduce((a,b)=>a+b,0)/r.execDays.length);
 
-  if(tab===5){
-    const ra=Object.entries(r.regionStats).sort((a,b)=>b[1].total-a[1].total).filter(([k])=>k!=="—");
-    if(ra.length>0)app.appendChild(sec("По регионам",body=>body.appendChild(tbl(["Регион","Тендеров","Выиграно","Win-rate"],ra.slice(0,30).map(([k,v])=>[k,num(v.total),num(v.won),pct(v.won/(v.total||1))])))));
-    else app.appendChild(h("div",{className:"empty-msg"},"Данные о регионах не обнаружены в файле."));
+  // Avg tender cycle days
+  let avgCycle=NaN;
+  if(r.cycleDays.length>0) avgCycle=Math.round(r.cycleDays.reduce((a,b)=>a+b,0)/r.cycleDays.length);
+
+  app.appendChild(h("div",{className:"card"},
+    h("div",{className:"kpi-row"},
+      kpi("\u0412\u0441\u0435\u0433\u043E \u0442\u0435\u043D\u0434\u0435\u0440\u043E\u0432",num(r.rows.length)),
+      kpi("\u0412\u044B\u0438\u0433\u0440\u0430\u043D\u043E",num(r.wonRows.length),pct(w)+" win-rate"),
+      kpi("\u041F\u0440\u043E\u0438\u0433\u0440\u0430\u043D\u043E",num(r.lostRows.length)),
+      kpi("\u0423\u043D\u0438\u043A. \u0437\u0430\u043A\u0430\u0437\u0447\u0438\u043A\u043E\u0432",num(r.customers.length))
+    ),
+    h("div",{className:"kpi-row"},
+      kpi("\u041E\u0431\u0449\u0438\u0439 \u043E\u0431\u044A\u0451\u043C",fmt(r.totalSum)),
+      kpi("\u041E\u0431\u044A\u0451\u043C \u043F\u043E\u0431\u0435\u0434",fmt(r.wonSum)),
+      kpi("\u0421\u0440\u0435\u0434\u043D\u0438\u0439 \u0447\u0435\u043A",fmt(avg)),
+      kpi("\u041C\u0435\u0434\u0438\u0430\u043D\u0430",fmt(r.median))
+    ),
+    h("div",{className:"kpi-row"},
+      kpi("\u041C\u0438\u043D. \u0442\u0435\u043D\u0434\u0435\u0440",fmt(r.sums.length?Math.min(...r.sums):NaN)),
+      kpi("\u041C\u0430\u043A\u0441. \u0442\u0435\u043D\u0434\u0435\u0440",fmt(r.sums.length?Math.max(...r.sums):NaN)),
+      kpi("\u0421\u0440. % \u0441\u043D\u0438\u0436\u0435\u043D\u0438\u044F",isNaN(avgDrop)?"\u2014":avgDrop.toFixed(1)+"%",r.priceDrop.length+" \u0437\u0430\u043F\u0438\u0441\u0435\u0439"),
+      kpi("\u0421\u0440. \u0441\u0440\u043E\u043A \u0434\u043E\u0433\u043E\u0432\u043E\u0440\u0430",isNaN(avgExec)?"\u2014":avgExec+" \u0434\u043D.",r.execDays.length+" \u0437\u0430\u043F\u0438\u0441\u0435\u0439")
+    ),
+    h("div",{className:"kpi-row"},
+      kpi("\u0421\u0440. \u0446\u0438\u043A\u043B \u0442\u0435\u043D\u0434\u0435\u0440\u0430",isNaN(avgCycle)?"\u2014":avgCycle+" \u0434\u043D.","\u043E\u0442 \u043F\u0443\u0431\u043B\u0438\u043A\u0430\u0446\u0438\u0438 \u0434\u043E \u0434\u043E\u0433\u043E\u0432\u043E\u0440\u0430")
+    )
+  ));
+  app.appendChild(sec("\u041E\u0431\u043D\u0430\u0440\u0443\u0436\u0435\u043D\u043D\u044B\u0435 \u0441\u0442\u043E\u043B\u0431\u0446\u044B",body=>{
+    [["Дата публикации",r.colDate],["Нач. цена",r.colStartPrice],["Конечная цена",r.colEndPrice],["Падение цены",r.colPriceDrop],["Статус",r.colStatus],["Заказчик",r.colCustomer],["Предмет",r.colSubject],["Способ отбора",r.colMethod],["Дата договора",r.colContractDate],["Срок исполнения",r.colExecDate],["Победитель",r.colWinner]].forEach(([l,v])=>body.appendChild(h("div",{style:{fontSize:"12px",lineHeight:"1.8"}},h("b",{},l+": "),v?h("span",{className:"col-found"},v):h("span",{className:"col-missing"},"\u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D"))));
+    body.appendChild(h("div",{style:{marginTop:"8px",color:"#999",fontSize:"11px"}},"\u0412\u0441\u0435 \u0441\u0442\u043E\u043B\u0431\u0446\u044B: "+r.cols.join(", ")));
+  }));
+}
+
+function renderDynamics(app,r){
+  const ya=Object.entries(r.byYear).sort((a,b)=>a[0]-b[0]);
+  app.appendChild(sec("\u041F\u043E \u0433\u043E\u0434\u0430\u043C",body=>{
+    body.appendChild(tbl(["\u0413\u043E\u0434","\u0422\u0435\u043D\u0434\u0435\u0440\u043E\u0432","\u0412\u044B\u0438\u0433\u0440\u0430\u043D\u043E","Win-rate","\u041E\u0431\u044A\u0451\u043C","\u0421\u0440. \u0447\u0435\u043A"],
+      ya.map(([y,rows])=>[y,num(rows.length),num(rows.filter(x=>x._s==="won").length),pct(calcWR(rows)),fmt(rows.reduce((a,b)=>a+(b._sum||0),0)),fmt(rows.reduce((a,b)=>a+(b._sum||0),0)/(rows.filter(x=>x._sum).length||1))])));
+    // Bar chart
+    body.appendChild(barChart("\u041A\u043E\u043B-\u0432\u043E \u0442\u0435\u043D\u0434\u0435\u0440\u043E\u0432 \u043F\u043E \u0433\u043E\u0434\u0430\u043C",ya.map(([y,rows])=>({label:y,value:rows.length}))));
+  }));
+
+  const ma=Object.entries(r.byMonth).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,24).reverse();
+  app.appendChild(sec("\u041F\u043E \u043C\u0435\u0441\u044F\u0446\u0430\u043C (\u043F\u043E\u0441\u043B\u0435\u0434\u043D\u0438\u0435 24)",body=>{
+    body.appendChild(tbl(["\u041C\u0435\u0441\u044F\u0446","\u0422\u0435\u043D\u0434\u0435\u0440\u043E\u0432","\u0412\u044B\u0438\u0433\u0440\u0430\u043D\u043E","Win-rate","\u041E\u0431\u044A\u0451\u043C"],
+      ma.map(([m,rows])=>[m,num(rows.length),num(rows.filter(x=>x._s==="won").length),pct(calcWR(rows)),fmt(rows.reduce((a,b)=>a+(b._sum||0),0))])));
+    body.appendChild(barChart("\u041A\u043E\u043B-\u0432\u043E \u0442\u0435\u043D\u0434\u0435\u0440\u043E\u0432 \u043F\u043E \u043C\u0435\u0441\u044F\u0446\u0430\u043C",ma.map(([m,rows])=>({label:m,value:rows.length}))));
+  }));
+}
+
+function renderCustomers(app,r){
+  const ca=Object.entries(r.custStats).sort((a,b)=>b[1].total-a[1].total);
+  const cs=Object.entries(r.custStats).sort((a,b)=>b[1].sum-a[1].sum);
+  app.appendChild(sec("\u0422\u043E\u043F \u0437\u0430\u043A\u0430\u0437\u0447\u0438\u043A\u043E\u0432 \u043F\u043E \u043A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u0443",body=>body.appendChild(tbl(["\u0417\u0430\u043A\u0430\u0437\u0447\u0438\u043A","\u0422\u0435\u043D\u0434\u0435\u0440\u043E\u0432","\u0412\u044B\u0438\u0433\u0440\u0430\u043D\u043E","Win-rate","\u041E\u0431\u044A\u0451\u043C"],ca.slice(0,30).map(([k,v])=>[k,num(v.total),num(v.won),pct(v.total>0?v.won/v.total:NaN),fmt(v.sum)])))));
+  app.appendChild(sec("\u0422\u043E\u043F \u0437\u0430\u043A\u0430\u0437\u0447\u0438\u043A\u043E\u0432 \u043F\u043E \u043E\u0431\u044A\u0451\u043C\u0443",body=>body.appendChild(tbl(["\u0417\u0430\u043A\u0430\u0437\u0447\u0438\u043A","\u041E\u0431\u044A\u0451\u043C","\u0422\u0435\u043D\u0434\u0435\u0440\u043E\u0432","\u0412\u044B\u0438\u0433\u0440\u0430\u043D\u043E","Win-rate"],cs.slice(0,20).map(([k,v])=>[k,fmt(v.sum),num(v.total),num(v.won),pct(v.total>0?v.won/v.total:NaN)])))));
+  app.appendChild(sec("\u0422\u043E\u043F \u043F\u043E \u0447\u0438\u0441\u043B\u0443 \u043F\u043E\u0431\u0435\u0434",body=>body.appendChild(tbl(["\u0417\u0430\u043A\u0430\u0437\u0447\u0438\u043A","\u041F\u043E\u0431\u0435\u0434","\u0422\u0435\u043D\u0434\u0435\u0440\u043E\u0432","Win-rate"],[...ca].sort((a,b)=>b[1].won-a[1].won).slice(0,20).map(([k,v])=>[k,num(v.won),num(v.total),pct(v.total>0?v.won/v.total:NaN)])))));
+  const vul=ca.filter(([,v])=>v.total>=2&&v.won/v.total<0.3);
+  app.appendChild(sec("\u0423\u044F\u0437\u0432\u0438\u043C\u044B\u0435: \u0432\u044B\u0441\u043E\u043A\u0430\u044F \u0430\u043A\u0442\u0438\u0432\u043D\u043E\u0441\u0442\u044C, \u043D\u0438\u0437\u043A\u0438\u0439 win-rate",body=>body.appendChild(tbl(["\u0417\u0430\u043A\u0430\u0437\u0447\u0438\u043A","\u0422\u0435\u043D\u0434\u0435\u0440\u043E\u0432","\u041F\u043E\u0431\u0435\u0434","Win-rate"],vul.slice(0,20).map(([k,v])=>[k,num(v.total),num(v.won),pct(v.won/v.total)])))));
+}
+
+function renderCategories(app,r){
+  const ca=Object.entries(r.catStats).sort((a,b)=>b[1].total-a[1].total);
+  app.appendChild(sec("\u041F\u043E \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044F\u043C",body=>body.appendChild(tbl(["\u041A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044F","\u0422\u0435\u043D\u0434\u0435\u0440\u043E\u0432","\u0412\u044B\u0438\u0433\u0440\u0430\u043D\u043E","Win-rate","\u041E\u0431\u044A\u0451\u043C"],ca.map(([k,v])=>[k,num(v.total),num(v.won),pct(v.total>0?v.won/v.total:NaN),fmt(v.sum)])))));
+  if(r.colSubject)app.appendChild(sec("\u041F\u0440\u0438\u043C\u0435\u0440\u044B \u043F\u0440\u0435\u0434\u043C\u0435\u0442\u043E\u0432",body=>body.appendChild(tbl(["\u041F\u0440\u0435\u0434\u043C\u0435\u0442","\u0421\u0443\u043C\u043C\u0430","\u0421\u0442\u0430\u0442\u0443\u0441"],r.rows.filter(x=>x._subject).slice(0,50).map(x=>[String(x._subject).slice(0,90),fmt(x._sum),x._s==="won"?"\u0412\u044B\u0438\u0433\u0440\u0430\u043D\u043E":x._s==="lost"?"\u041F\u0440\u043E\u0438\u0433\u0440\u0430\u043D\u043E":"\u2014"])))));
+}
+
+function renderRanges(app,r){
+  app.appendChild(sec("\u041F\u043E \u0446\u0435\u043D\u043E\u0432\u044B\u043C \u0434\u0438\u0430\u043F\u0430\u0437\u043E\u043D\u0430\u043C",body=>body.appendChild(tbl(["\u0414\u0438\u0430\u043F\u0430\u0437\u043E\u043D","\u0422\u0435\u043D\u0434\u0435\u0440\u043E\u0432","\u0414\u043E\u043B\u044F","\u0412\u044B\u0438\u0433\u0440\u0430\u043D\u043E","Win-rate","\u041E\u0431\u044A\u0451\u043C"],
+    r.rangeStats.map(rs=>[rs.label,num(rs.total),pct(rs.total/r.rows.length),num(rs.won),pct(rs.total>0?rs.won/rs.total:NaN),fmt(rs.sum)])))));
+
+  // By procurement method
+  if(r.methodStats&&Object.keys(r.methodStats).length>0){
+    const ma=Object.entries(r.methodStats).sort((a,b)=>b[1].total-a[1].total);
+    app.appendChild(sec("\u041F\u043E \u0441\u043F\u043E\u0441\u043E\u0431\u0443 \u043E\u0442\u0431\u043E\u0440\u0430",body=>body.appendChild(tbl(["\u0421\u043F\u043E\u0441\u043E\u0431 \u043E\u0442\u0431\u043E\u0440\u0430","\u0422\u0435\u043D\u0434\u0435\u0440\u043E\u0432","\u041E\u0431\u044A\u0451\u043C","\u0412\u044B\u0438\u0433\u0440\u0430\u043D\u043E","Win-rate"],
+      ma.map(([k,v])=>[k,num(v.total),fmt(v.sum),num(v.won),pct(v.total>0?v.won/v.total:NaN)])))));
   }
 }
 
+function renderInsights(app,r){
+  // TOP-5 clients by count and avg final price
+  const custEndPrice={};
+  r.rows.forEach(row=>{
+    const c=row._cust;
+    if(!custEndPrice[c])custEndPrice[c]={count:0,totalEnd:0};
+    custEndPrice[c].count++;
+    if(row._endPrice!=null)custEndPrice[c].totalEnd+=row._endPrice;
+  });
+  const top5cust=Object.entries(custEndPrice).sort((a,b)=>b[1].count-a[1].count).slice(0,5);
+  app.appendChild(sec("\u0422\u041E\u041F-5 \u043A\u043B\u0438\u0435\u043D\u0442\u043E\u0432 \u043F\u043E \u043A\u043E\u043B-\u0432\u0443 \u0438 \u0441\u0440. \u0441\u0443\u043C\u043C\u0435 \u0437\u0430\u043A\u0443\u043F\u043A\u0438",body=>body.appendChild(tbl(
+    ["\u0417\u0430\u043A\u0430\u0437\u0447\u0438\u043A","\u041A\u043E\u043B-\u0432\u043E \u0442\u0435\u043D\u0434\u0435\u0440\u043E\u0432","\u0421\u0440. \u0441\u0443\u043C\u043C\u0430 (\u043A\u043E\u043D\u0435\u0447\u043D\u0430\u044F \u0446\u0435\u043D\u0430)"],
+    top5cust.map(([k,v])=>[k,num(v.count),fmt(v.count>0?v.totalEnd/v.count:NaN)])
+  ))));
+
+  // TOP-5 active months
+  const monthCount={};
+  r.rows.forEach(row=>{
+    if(!row._date)return;
+    const mk=`${row._date.getFullYear()}-${String(row._date.getMonth()+1).padStart(2,"0")}`;
+    if(!monthCount[mk])monthCount[mk]=0;
+    monthCount[mk]++;
+  });
+  const top5months=Object.entries(monthCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  app.appendChild(sec("\u0422\u041E\u041F-5 \u0430\u043A\u0442\u0438\u0432\u043D\u044B\u0445 \u043C\u0435\u0441\u044F\u0446\u0435\u0432 (\u043F\u043E \u0434\u0430\u0442\u0435 \u043F\u0443\u0431\u043B\u0438\u043A\u0430\u0446\u0438\u0438)",body=>body.appendChild(tbl(
+    ["\u041C\u0435\u0441\u044F\u0446","\u041A\u043E\u043B-\u0432\u043E \u0442\u0435\u043D\u0434\u0435\u0440\u043E\u0432"],
+    top5months.map(([m,c])=>[m,num(c)])
+  ))));
+
+  // TOP-5 procurement methods
+  if(r.methodStats&&Object.keys(r.methodStats).length>0){
+    const top5m=Object.entries(r.methodStats).sort((a,b)=>b[1].total-a[1].total).slice(0,5);
+    app.appendChild(sec("\u0422\u041E\u041F-5 \u0442\u0438\u043F\u043E\u0432 \u0437\u0430\u043A\u0443\u043F\u043A\u0438 (\u0441\u043F\u043E\u0441\u043E\u0431 \u043E\u0442\u0431\u043E\u0440\u0430)",body=>body.appendChild(tbl(
+      ["\u0421\u043F\u043E\u0441\u043E\u0431 \u043E\u0442\u0431\u043E\u0440\u0430","\u041A\u043E\u043B-\u0432\u043E","\u041E\u0431\u0449\u0430\u044F \u0441\u0443\u043C\u043C\u0430"],
+      top5m.map(([k,v])=>[k,num(v.total),fmt(v.sum)])
+    ))));
+  } else {
+    app.appendChild(h("div",{className:"empty-msg"},"\u0421\u0442\u043E\u043B\u0431\u0435\u0446 \u00AB\u0421\u043F\u043E\u0441\u043E\u0431 \u043E\u0442\u0431\u043E\u0440\u0430\u00BB \u043D\u0435 \u043E\u0431\u043D\u0430\u0440\u0443\u0436\u0435\u043D \u0432 \u0444\u0430\u0439\u043B\u0435."));
+  }
+}
+
+// ==================== FILE PROCESSING ====================
 function processFile(file){
   const reader=new FileReader();
   reader.onload=e=>{
@@ -242,29 +364,80 @@ function processFile(file){
       const wb=XLSX.read(e.target.result,{type:"array",cellDates:true});
       const sn=wb.SheetNames[0],ws=wb.Sheets[sn];
       const raw=XLSX.utils.sheet_to_json(ws,{defval:null});
-      if(!raw.length){alert("Файл пуст.");return}
+      if(!raw.length){alert("\u0424\u0430\u0439\u043B \u043F\u0443\u0441\u0442.");return}
       const cols=Object.keys(raw[0]);
       const fc=kw=>cols.find(c=>kw.some(k=>c.toLowerCase().includes(k)))||null;
-      const cD=fc(["дата","date","публикац","размещ","начал"]);
-      const cS=fc(["сумм","цена","нмцк","стоим","бюджет","price"]);
-      const cSt=fc(["статус","результ","итог","winner","победит"]);
-      const cC=fc(["заказчик","организац","покупател","клиент","customer"]);
-      const cSu=fc(["предмет","наименован","описан","товар","объект","subject","name"]);
-      const cR=fc(["регион","город","субъект","location","region"]);
-      const cW=fc(["поставщик","победитель","исполнитель","участник"]);
+
+      const colDate=fc(["дата публикац","date","дата размещ","дата начал"]);
+      const colSum=fc(["сумм","нмцк","начальн"]);
+      const colEndPrice=fc(["конечн","итогов","цена контракт","цена договор"]);
+      const colStartPrice=fc(["начальн","нмцк","сумм"]);
+      const colPriceDrop=fc(["падени","снижен","дисконт","скидк"]);
+      const colStatus=fc(["статус","результ","итог","winner","победит"]);
+      const colCustomer=fc(["заказчик","организац","покупател","клиент","customer"]);
+      const colSubject=fc(["предмет","наименован","описан","товар","объект","subject","name"]);
+      const colMethod=fc(["способ","метод","тип закупк","вид закупк","отбор","процедур"]);
+      const colContractDate=fc(["дата контракт","дата договор","дата заключ"]);
+      const colExecDate=fc(["срок исполн","дата исполн","срок поставк","дата окончан","срок оконч"]);
+      const colWinner=fc(["поставщик","победитель","исполнитель","участник"]);
+
+      function parseDate(v){
+        if(!v)return null;
+        if(v instanceof Date&&!isNaN(v))return v;
+        const d=new Date(v);if(!isNaN(d))return d;
+        const s=parseFloat(v);if(!isNaN(s)){const ed=new Date((s-25569)*864e5);if(!isNaN(ed))return ed}
+        return null;
+      }
+      function parseNum(v){
+        if(v==null||v==="")return null;
+        if(typeof v==="number")return v;
+        const s=parseFloat(String(v).replace(/[^\d.,-]/g,"").replace(",","."));
+        return isNaN(s)?null:s;
+      }
+
+      const priceDrop=[], execDays=[], cycleDays=[];
 
       const rows=raw.map((r,i)=>{
-        let date=null;
-        if(cD&&r[cD]){const d=new Date(r[cD]);if(!isNaN(d))date=d;else{const s=parseFloat(r[cD]);if(!isNaN(s)){const ed=new Date((s-25569)*864e5);if(!isNaN(ed))date=ed}}}
-        let sum=null;
-        if(cS&&r[cS]!=null&&r[cS]!==""){const s=parseFloat(String(r[cS]).replace(/[^\d.,-]/g,"").replace(",","."));if(!isNaN(s))sum=s}
+        const date=colDate?parseDate(r[colDate]):null;
+        const sum=colSum?parseNum(r[colSum]):null;
+        const endPrice=colEndPrice?parseNum(r[colEndPrice]):null;
+        const startPrice=colStartPrice?parseNum(r[colStartPrice]):null;
+        const contractDate=colContractDate?parseDate(r[colContractDate]):null;
+        const execDate=colExecDate?parseDate(r[colExecDate]):null;
+
+        // Price drop %
+        let dropVal=null;
+        if(colPriceDrop&&r[colPriceDrop]!=null){
+          dropVal=parseNum(r[colPriceDrop]);
+          // If stored as decimal 0.xx, convert to %
+          if(dropVal!=null&&dropVal>0&&dropVal<1)dropVal=dropVal*100;
+        } else if(startPrice!=null&&endPrice!=null&&startPrice>0){
+          dropVal=((startPrice-endPrice)/startPrice)*100;
+        }
+        if(dropVal!=null&&!isNaN(dropVal)&&dropVal>=0&&dropVal<=100)priceDrop.push(dropVal);
+
+        // Execution days
+        if(contractDate&&execDate){const dd=daysDiff(contractDate,execDate);if(dd!=null&&dd>=0&&dd<3650)execDays.push(dd)}
+
+        // Tender cycle days
+        if(date&&contractDate){const dd=daysDiff(date,contractDate);if(dd!=null&&dd>=0&&dd<3650)cycleDays.push(dd)}
+
         let st="unknown";
-        if(cSt&&r[cSt]){const v=String(r[cSt]).toLowerCase();if(v.includes("выигр")||v.includes("победа")||v.includes("win")||v.includes("заключ")||v.includes("контракт"))st="won";else if(v.includes("проигр")||v.includes("отклон")||v.includes("не выигр")||v.includes("lose")||v.includes("lost"))st="lost";else if(v.includes("участ"))st="participated"}
-        if(st==="unknown"&&cW&&r[cW]){const v=String(r[cW]).toLowerCase();if(v.includes("социализм")||v.includes("socialism"))st="won"}
-        const subject=cSu?(r[cSu]||""):"";
+        if(colStatus&&r[colStatus]){
+          const v=String(r[colStatus]).toLowerCase();
+          if(v.includes("выигр")||v.includes("победа")||v.includes("win")||v.includes("заключ")||v.includes("контракт"))st="won";
+          else if(v.includes("проигр")||v.includes("отклон")||v.includes("не выигр")||v.includes("lose")||v.includes("lost"))st="lost";
+          else if(v.includes("участ"))st="participated";
+        }
+        if(st==="unknown"&&colWinner&&r[colWinner]){const v=String(r[colWinner]).toLowerCase();if(v.includes("социализм")||v.includes("socialism"))st="won"}
+
+        const subject=colSubject?(r[colSubject]||""):"";
         let cat="Прочее";const sl=String(subject).toLowerCase();
         for(const c of CATEGORIES){if(c.keys.some(k=>sl.includes(k))){cat=c.label;break}}
-        return{...r,_date:date,_sum:sum,_s:st,_cust:cC?(r[cC]||"Не указан"):"—",_subject:subject,_cat:cat,_reg:cR?(r[cR]||"—"):"—",_i:i};
+
+        const method=colMethod?(r[colMethod]||""):"";
+
+        return{...r,_date:date,_sum:sum,_endPrice:endPrice,_s:st,_cust:colCustomer?(r[colCustomer]||"\u041D\u0435 \u0443\u043A\u0430\u0437\u0430\u043D"):"\u2014",_subject:subject,_cat:cat,_method:method,_i:i};
       });
 
       const dates=rows.map(r=>r._date).filter(Boolean).sort((a,b)=>a-b);
@@ -275,20 +448,20 @@ function processFile(file){
       const wonSum=wonRows.map(r=>r._sum).filter(v=>v!=null).reduce((a,b)=>a+b,0);
       const ss=[...sums].sort((a,b)=>a-b);
       const median=ss.length?ss[Math.floor(ss.length/2)]:null;
-      const customers=[...new Set(rows.map(r=>r._cust).filter(c=>c&&c!=="—"&&c!=="Не указан"))];
+      const customers=[...new Set(rows.map(r=>r._cust).filter(c=>c&&c!=="\u2014"&&c!=="\u041D\u0435 \u0443\u043A\u0430\u0437\u0430\u043D"))];
 
-      const byYear={},byMonth={},custStats={},catStats={},regionStats={};
+      const byYear={},byMonth={},custStats={},catStats={},methodStats={};
       rows.forEach(r=>{
         if(r._date){const y=r._date.getFullYear();if(!byYear[y])byYear[y]=[];byYear[y].push(r);const mk=`${y}-${String(r._date.getMonth()+1).padStart(2,"0")}`;if(!byMonth[mk])byMonth[mk]=[];byMonth[mk].push(r)}
         const c=r._cust;if(!custStats[c])custStats[c]={total:0,won:0,lost:0,sum:0};custStats[c].total++;custStats[c].sum+=r._sum||0;if(r._s==="won")custStats[c].won++;if(r._s==="lost")custStats[c].lost++;
         const ct=r._cat;if(!catStats[ct])catStats[ct]={total:0,won:0,lost:0,sum:0};catStats[ct].total++;catStats[ct].sum+=r._sum||0;if(r._s==="won")catStats[ct].won++;if(r._s==="lost")catStats[ct].lost++;
-        const rg=r._reg||"—";if(!regionStats[rg])regionStats[rg]={total:0,won:0};regionStats[rg].total++;if(r._s==="won")regionStats[rg].won++;
+        if(r._method){const m=r._method;if(!methodStats[m])methodStats[m]={total:0,won:0,sum:0};methodStats[m].total++;methodStats[m].sum+=r._sum||0;if(r._s==="won")methodStats[m].won++}
       });
       const rangeStats=RANGES.map(range=>{const rr=rows.filter(r=>r._sum!=null&&r._sum>=range.min&&r._sum<range.max);return{...range,total:rr.length,sum:rr.reduce((a,b)=>a+(b._sum||0),0),won:rr.filter(r=>r._s==="won").length,lost:rr.filter(r=>r._s==="lost").length}});
 
-      R={rows,cols,colDate:cD,colSum:cS,colStatus:cSt,colCustomer:cC,colSubject:cSu,colRegion:cR,colWinner:cW,periodStart:dates[0]||null,periodEnd:dates[dates.length-1]||null,sums,totalSum,wonSum,median,customers,custStats,catStats,rangeStats,regionStats,byYear,byMonth,wonRows,lostRows,sheetName:sn};
+      R={rows,cols,colDate,colSum,colStartPrice,colEndPrice,colPriceDrop,colStatus,colCustomer,colSubject,colMethod,colContractDate,colExecDate,colWinner,periodStart:dates[0]||null,periodEnd:dates[dates.length-1]||null,sums,totalSum,wonSum,median,customers,custStats,catStats,methodStats,rangeStats,byYear,byMonth,wonRows,lostRows,sheetName:sn,priceDrop,execDays,cycleDays};
       tab=0;render();
-    }catch(err){alert("Ошибка: "+err.message)}
+    }catch(err){alert("\u041E\u0448\u0438\u0431\u043A\u0430: "+err.message)}
   };
   reader.readAsArrayBuffer(file);
 }
