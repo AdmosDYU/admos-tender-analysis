@@ -266,6 +266,13 @@ function renderSummary(app,r){
   ));
   app.appendChild(sec("\u041E\u0431\u043D\u0430\u0440\u0443\u0436\u0435\u043D\u043D\u044B\u0435 \u0441\u0442\u043E\u043B\u0431\u0446\u044B",body=>{
     [["Дата публикации",r.colDate],["Нач. цена",r.colStartPrice],["Конечная цена",r.colEndPrice],["Падение цены",r.colPriceDrop],["Статус",r.colStatus],["Заказчик",r.colCustomer],["Предмет",r.colSubject],["Способ отбора",r.colMethod],["Дата договора",r.colContractDate],["Срок исполнения",r.colExecDate],["Победитель",r.colWinner]].forEach(([l,v])=>body.appendChild(h("div",{style:{fontSize:"12px",lineHeight:"1.8"}},h("b",{},l+": "),v?h("span",{className:"col-found"},v):h("span",{className:"col-missing"},"\u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D"))));
+    // Debug: show sample values for contract/exec columns
+    const samples=[];
+    if(r.colContractDate){const sv=r.rows.slice(0,3).map(x=>x[r.colContractDate]||"—").join(", ");samples.push("Дата договора (примеры): "+sv)}
+    if(r.colExecDate){const sv=r.rows.slice(0,3).map(x=>x[r.colExecDate]||"—").join(", ");samples.push("Срок исполн. (примеры): "+sv)}
+    if(!r.colContractDate||!r.colExecDate){samples.push("Не найдены столбцы для расчёта срока договора")}
+    samples.push("execDays записей: "+r.execDays.length+", cycleDays записей: "+r.cycleDays.length);
+    body.appendChild(h("div",{style:{marginTop:"10px",padding:"8px 12px",background:"#fff8f0",border:"1px solid var(--brand-border)",borderRadius:"6px",fontSize:"11px",color:"#666",lineHeight:"1.8"}}, ...samples.map(s=>h("div",{},s))));
     body.appendChild(h("div",{style:{marginTop:"8px",color:"#999",fontSize:"11px"}},"\u0412\u0441\u0435 \u0441\u0442\u043E\u043B\u0431\u0446\u044B: "+r.cols.join(", ")));
   }));
 }
@@ -377,8 +384,10 @@ function processFile(file){
       const colCustomer=fc(["заказчик","организац","покупател","клиент","customer"]);
       const colSubject=fc(["предмет","наименован","описан","товар","объект","subject","name"]);
       const colMethod=fc(["способ","метод","тип закупк","вид закупк","отбор","процедур"]);
-      const colContractDate=fc(["дата контракт","дата договор","дата заключ","контракта/договора"]);
-      const colExecDate=fc(["срок исполн","дата исполн","срок поставк","дата окончан","срок оконч"]);
+      // Detect contract & execution date columns with broader matching
+      // First try exact-ish matches, then fallback to broader
+      const colContractDate=fc(["дата контракт","дата договор","дата заключ","заключени"])||fc(["контракт/договор","контракта/договора"]);
+      const colExecDate=fc(["срок исполн","дата исполн","срок поставк","дата окончан","срок оконч","окончани","исполнени"]);
       const colWinner=fc(["поставщик","победитель","исполнитель","участник"]);
 
       function parseDate(v){
@@ -425,8 +434,15 @@ function processFile(file){
         }
         if(dropVal!=null&&!isNaN(dropVal)&&dropVal>=0&&dropVal<=100)priceDrop.push(dropVal);
 
-        // Execution days
-        if(contractDate&&execDate){const dd=daysDiff(contractDate,execDate);if(dd!=null&&dd>=0&&dd<3650)execDays.push(dd)}
+        // Execution days: try date diff first, then check if execDate col has number of days
+        if(contractDate&&execDate){
+          const dd=daysDiff(contractDate,execDate);
+          if(dd!=null&&dd>=0&&dd<3650)execDays.push(dd);
+        } else if(contractDate&&colExecDate&&r[colExecDate]!=null){
+          // Maybe "Срок исполнения" is a number of days, not a date
+          const numDays=parseNum(r[colExecDate]);
+          if(numDays!=null&&numDays>0&&numDays<3650)execDays.push(Math.round(numDays));
+        }
 
         // Tender cycle days
         if(date&&contractDate){const dd=daysDiff(date,contractDate);if(dd!=null&&dd>=0&&dd<3650)cycleDays.push(dd)}
